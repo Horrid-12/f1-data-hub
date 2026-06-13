@@ -109,7 +109,14 @@ export async function getDriversClient(year: number = 2026): Promise<Driver[]> {
     if (driversRes.status === 401) throw new Error("OPENF1_RESTRICTED");
     if (!driversRes.ok) return [];
 
-    return await driversRes.json();
+    const data: Driver[] = await driversRes.json();
+    const seen = new Set<number>();
+    return data.filter((driver) => {
+      if (!driver.driver_number) return false;
+      if (seen.has(driver.driver_number)) return false;
+      seen.add(driver.driver_number);
+      return true;
+    });
   } catch (err: unknown) {
     if (err instanceof Error && err.message === "OPENF1_RESTRICTED") throw err;
     return [];

@@ -12,6 +12,8 @@ export default function DriversPage() {
   const [lastSessionKey, setLastSessionKey] = useState<number | undefined>();
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"name" | "number">("name");
+  const [filterTeam, setFilterTeam] = useState<string>("all");
 
   useEffect(() => {
     let mounted = true;
@@ -46,12 +48,15 @@ export default function DriversPage() {
 
   const filtered = drivers.filter((d) => {
     const q = search.toLowerCase();
-    return (
+    const matchesSearch =
       d.full_name?.toLowerCase().includes(q) ||
       d.team_name?.toLowerCase().includes(q) ||
-      d.name_acronym?.toLowerCase().includes(q)
-    );
+      d.name_acronym?.toLowerCase().includes(q);
+    const matchesTeam = filterTeam === "all" || d.team_name === filterTeam;
+    return matchesSearch && matchesTeam;
   });
+
+  const teams = Array.from(new Set(drivers.map((d) => d.team_name))).sort();
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-12">
@@ -73,8 +78,8 @@ export default function DriversPage() {
         </p>
       </div>
 
-      {/* Search */}
-      <div className="mb-8">
+      {/* Search & Filters */}
+      <div className="mb-8 space-y-4">
         <input
           type="text"
           placeholder="Search by name, team, or acronym..."
@@ -87,10 +92,33 @@ export default function DriversPage() {
             {filtered.length} driver{filtered.length !== 1 ? "s" : ""} found
           </p>
         )}
+        
+        {/* Filter & Sort Controls */}
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={filterTeam}
+            onChange={(e) => setFilterTeam(e.target.value)}
+            className="bg-[#0d0d0d] border border-white/10 hover:border-white/20 text-white rounded-lg px-3 py-2 text-sm outline-none transition-colors cursor-pointer"
+          >
+            <option value="all">All Teams</option>
+            {teams.map((team) => (
+              <option key={team} value={team}>
+                {team}
+              </option>
+            ))}
+          </select>
+          
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as "name" | "number")}
+            className="bg-[#0d0d0d] border border-white/10 hover:border-white/20 text-white rounded-lg px-3 py-2 text-sm outline-none transition-colors cursor-pointer"
+          >
+            <option value="name">Sort by Name</option>
+            <option value="number">Sort by Number</option>
+          </select>
+        </div>
       </div>
 
-      {/* Grid */}
-      
       {/* Grid */}
       {error ? (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
@@ -103,32 +131,39 @@ export default function DriversPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <p className="text-gray-600 text-sm">No drivers match &quot;{search}&quot;</p>
+        <p className="text-gray-600 text-sm">No drivers match your filters</p>
       ) : (
-      <div className="space-y-8">
-        {Object.entries(
-          filtered.reduce((groups, driver) => {
-            const team = driver.team_name ?? "Unknown";
-            if (!groups[team]) groups[team] = [];
-            groups[team].push(driver);
-            return groups;
-          }, {} as Record<string, typeof filtered>)
-        ).map(([teamName, teamDrivers]) => (
-          <div key={teamName}>
-            <p className="text-gray-600 text-xs uppercase tracking-widest mb-3">
-              {teamName}
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {teamDrivers.map((driver) => (
-                <div key={driver.driver_number} onClick={() => setSelected(driver)}>
-                  <DriverCard driver={driver} />
-                </div>
-              ))}
+        <div className="space-y-8">
+          {Object.entries(
+            filtered
+              .sort((a, b) => {
+                if (sortBy === "number") {
+                  return (a.driver_number || 0) - (b.driver_number || 0);
+                }
+                return a.full_name.localeCompare(b.full_name);
+              })
+              .reduce((groups, driver) => {
+                const team = driver.team_name ?? "Unknown";
+                if (!groups[team]) groups[team] = [];
+                groups[team].push(driver);
+                return groups;
+              }, {} as Record<string, typeof filtered>)
+          ).map(([teamName, teamDrivers]) => (
+            <div key={teamName}>
+              <p className="text-gray-600 text-xs uppercase tracking-widest mb-3">
+                {teamName}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {teamDrivers.map((driver) => (
+                  <div key={driver.driver_number} onClick={() => setSelected(driver)}>
+                    <DriverCard driver={driver} />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    )}
+          ))}
+        </div>
+      )}
 
       <DriverModal
         driver={selected}

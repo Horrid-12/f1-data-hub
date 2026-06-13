@@ -11,6 +11,7 @@ export default function TeamsPage() {
   const [selected, setSelected] = useState<TeamInfo | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "championships" | "founded">("name");
 
   useEffect(() => {
     getDriversClient(2026).then(setDrivers);
@@ -25,6 +26,15 @@ export default function TeamsPage() {
       t.base.toLowerCase().includes(q) ||
       t.principal.toLowerCase().includes(q)
     );
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "championships") {
+      return b.championships - a.championships;
+    } else if (sortBy === "founded") {
+      return a.firstEntry - b.firstEntry;
+    }
+    return a.name.localeCompare(b.name);
   });
 
   return (
@@ -47,8 +57,8 @@ export default function TeamsPage() {
         </p>
       </div>
 
-      {/* Search */}
-      <div className="mb-8">
+      {/* Search & Sort */}
+      <div className="mb-8 space-y-4">
         <input
           type="text"
           placeholder="Search by name, base, or principal..."
@@ -61,16 +71,26 @@ export default function TeamsPage() {
             {filtered.length} team{filtered.length !== 1 ? "s" : ""} found
           </p>
         )}
+        
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as "name" | "championships" | "founded")}
+          className="bg-[#0d0d0d] border border-white/10 hover:border-white/20 text-white rounded-lg px-3 py-2 text-sm outline-none transition-colors cursor-pointer"
+        >
+          <option value="name">Sort by Name</option>
+          <option value="championships">Sort by Championships</option>
+          <option value="founded">Sort by Founded</option>
+        </select>
       </div>
 
       {/* Grid */}
       {filtered.length === 0 ? (
         <p className="text-gray-600 text-sm">
-          No teams match &quot;{search}&quot;
+          No teams match your search
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {filtered.map((team) => (
+          {sorted.map((team) => (
             <div key={team.name} onClick={() => setSelected(team)}>
               <TeamCard team={team} />
             </div>

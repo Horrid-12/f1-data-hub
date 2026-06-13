@@ -13,6 +13,7 @@ export default function Navbar() {
     { href: "/races", label: "Races" },
     { href: "/standings", label: "Standings" },
     { href: "/compare", label: "Compare" },
+    { href: "/favorites", label: "❤️ Favorites" },
   ];
 
   return (
