@@ -11,6 +11,7 @@ export default function Navbar() {
     { href: "/drivers", label: "Drivers" },
     { href: "/teams", label: "Teams" },
     { href: "/races", label: "Races" },
+    { href: "/standings", label: "Standings" },
     { href: "/compare", label: "Compare" },
   ];
 
@@ -20,11 +21,11 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 bg-[#E8002D] rounded flex items-center justify-center">
+          <div className="w-8 h-8 bg-f1red rounded flex items-center justify-center">
             <span className="text-white font-black text-sm">F1</span>
           </div>
           <span className="text-white font-bold text-lg tracking-tight">
-            Data <span className="text-[#C89B3C]">Hub</span>
+            Data <span className="text-f1gold">Hub</span>
           </span>
         </Link>
 

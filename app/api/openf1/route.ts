@@ -13,7 +13,7 @@ export async function GET(req: Request) {
       { status: 400 }
     );
   }
-
+ 
   const queryParams = new URLSearchParams(url.searchParams);
   queryParams.delete("path");
 

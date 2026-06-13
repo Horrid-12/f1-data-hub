@@ -259,3 +259,50 @@ export async function getRaceResults(
     return [];
   }
 }
+
+export async function getDriverStandings(year: number): Promise<{
+  position: string;
+  points: string;
+  wins: string;
+  Driver: {
+    driverId: string;
+    givenName: string;
+    familyName: string;
+    nationality: string;
+    permanentNumber?: string;
+  };
+  Constructors: { name: string; constructorId: string }[];
+}[]> {
+  try {
+    const res = await fetch(
+      `https://api.jolpi.ca/ergast/f1/${year}/driverstandings.json?limit=100`
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getConstructorStandings(year: number): Promise<{
+  position: string;
+  points: string;
+  wins: string;
+  Constructor: {
+    constructorId: string;
+    name: string;
+    nationality: string;
+  };
+}[]> {
+  try {
+    const res = await fetch(
+      `https://api.jolpi.ca/ergast/f1/${year}/constructorstandings.json?limit=100`
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
+  } catch {
+    return [];
+  }
+}

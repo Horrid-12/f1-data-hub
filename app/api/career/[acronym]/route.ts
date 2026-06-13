@@ -57,7 +57,7 @@ const CHAMPIONSHIPS: Record<string, number> = {
   colapinto: 0,
   lindblad: 0,
 };
-
+ 
 // Fetches all pages from a Jolpica endpoint and returns every Race object
 async function fetchAllRaces(url: string): Promise<{ Results: { position: string }[] }[]> {
   const limit = 100;
