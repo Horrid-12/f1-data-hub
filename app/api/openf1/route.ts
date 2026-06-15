@@ -2,12 +2,30 @@ import { NextResponse } from "next/server";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const VALID_PATHS = new Set([
+  "sessions",
+  "drivers",
+  "laps",
+  "intervals",
+  "location",
+  "meetups",
+  "pit",
+  "position",
+  "race_control",
+  "team_radio",
+  "weather",
+  "car_data",
+]);
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   const path = searchParams.get("path");
   if (!path) {
     return NextResponse.json({ error: "No path provided" }, { status: 400 });
+  }
+  if (!VALID_PATHS.has(path)) {
+    return NextResponse.json({ error: `Invalid path: ${path}` }, { status: 400 });
   }
 
   const params = new URLSearchParams(searchParams);
