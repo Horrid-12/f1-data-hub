@@ -28,58 +28,16 @@ const DRIVER_ID_MAP: Record<string, string> = {
   COL: "colapinto",
   LIN: "lindblad",
 };
-
-const CHAMPIONSHIPS: Record<string, number> = {
-  hamilton: 7,
-  max_verstappen: 4,
-  alonso: 2,
-  norris: 1,
-  leclerc: 0,
-  russell: 0,
-  sainz: 0,
-  piastri: 0,
-  ricciardo: 0,
-  bottas: 0,
-  hulkenberg: 0,
-  gasly: 0,
-  ocon: 0,
-  albon: 0,
-  stroll: 0,
-  tsunoda: 0,
-  zhou: 0,
-  kevin_magnussen: 0,
-  lawson: 0,
-  bearman: 0,
-  antonelli: 0,
-  bortoleto: 0,
-  hadjar: 0,
-  doohan: 0,
-  colapinto: 0,
-  lindblad: 0,
-};
- 
-// Fetches all pages from a Jolpica endpoint and returns every Race object
+// Fetches all races for a driver in a single request by setting limit=1000
 async function fetchAllRaces(url: string): Promise<{ Results: { position: string }[] }[]> {
-  const limit = 100;
-  let offset = 0;
-  let total = Infinity;
-  const allRaces: { Results: { position: string }[] }[] = [];
-
-  while (offset < total) {
-    const res = await fetch(`${url}&limit=${limit}&offset=${offset}`);
-    if (!res.ok) break;
-
+  try {
+    const res = await fetch(`${url}&limit=1000`);
+    if (!res.ok) return [];
     const data = await res.json();
-    total = parseInt(data?.MRData?.total ?? "0");
-    const races = data?.MRData?.RaceTable?.Races ?? [];
-    allRaces.push(...races);
-    offset += limit;
-
-    // Safety valve — never fetch more than 10 pages (1000 races)
-    if (offset >= 1000) break;
+    return data?.MRData?.RaceTable?.Races ?? [];
+  } catch {
+    return [];
   }
-
-  return allRaces;
 }
 
 export async function GET(
@@ -96,10 +54,11 @@ export async function GET(
   const base = "https://api.jolpi.ca/ergast/f1";
 
   try {
-    // Fetch wins total and all races (paginated)
-    const [winsRes, allRaces] = await Promise.all([
+    // Fetch wins total, all races, and standings dynamically
+    const [winsRes, allRaces, standingsRes] = await Promise.all([
       fetch(`${base}/drivers/${driverId}/results/1.json?limit=1`),
       fetchAllRaces(`${base}/drivers/${driverId}/results.json?`),
+      fetch(`${base}/drivers/${driverId}/driverStandings.json?limit=100`),
     ]);
 
     if (!winsRes.ok) {
@@ -115,9 +74,16 @@ export async function GET(
       return pos >= 1 && pos <= 3;
     }).length;
 
-    const championships = CHAMPIONSHIPS[driverId] ?? 0;
+    let championships = 0;
+    if (standingsRes.ok) {
+      const standingsData = await standingsRes.json();
+      const lists = standingsData?.MRData?.StandingsTable?.StandingsLists ?? [];
+      championships = lists.filter(
+        (list: any) => list.DriverStandings?.[0]?.position === "1"
+      ).length;
+    }
 
-    console.log(`${driverId}: races=${races}, wins=${wins}, podiums=${podiums}`);
+    console.log(`${driverId}: races=${races}, wins=${wins}, podiums=${podiums}, championships=${championships}`);
 
     return NextResponse.json({ wins, podiums, championships, races });
   } catch (err) {

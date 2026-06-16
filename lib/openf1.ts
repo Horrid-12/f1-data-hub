@@ -218,6 +218,16 @@ export async function getDriverCareerStats(nameAcronym: string): Promise<{
   }
 }
 
+function getCacheOptions(year: number): RequestInit {
+  const currentYear = new Date().getFullYear();
+  if (year < currentYear) {
+    // Indefinite/very long caching for historical seasons
+    return { next: { revalidate: 31536000 } }; // 1 year
+  }
+  // 1 hour caching for active/current/future seasons
+  return { next: { revalidate: 3600 } };
+}
+
 export async function getSeasonRaces(year: number): Promise<{
   round: string;
   raceName: string;
@@ -229,7 +239,8 @@ export async function getSeasonRaces(year: number): Promise<{
 }[]> {
   try {
     const res = await fetch(
-      `https://api.jolpi.ca/ergast/f1/${year}/races.json?limit=100`
+      `https://api.jolpi.ca/ergast/f1/${year}/races.json?limit=100`,
+      getCacheOptions(year)
     );
     if (!res.ok) return [];
     const data = await res.json();
@@ -254,7 +265,8 @@ export async function getRaceResults(
 }[]> {
   try {
     const res = await fetch(
-      `https://api.jolpi.ca/ergast/f1/${year}/${round}/results.json`
+      `https://api.jolpi.ca/ergast/f1/${year}/${round}/results.json`,
+      getCacheOptions(year)
     );
     if (!res.ok) return [];
     const data = await res.json();
@@ -279,7 +291,8 @@ export async function getDriverStandings(year: number): Promise<{
 }[]> {
   try {
     const res = await fetch(
-      `https://api.jolpi.ca/ergast/f1/${year}/driverstandings.json?limit=100`
+      `https://api.jolpi.ca/ergast/f1/${year}/driverstandings.json?limit=100`,
+      getCacheOptions(year)
     );
     if (!res.ok) return [];
     const data = await res.json();
@@ -301,7 +314,8 @@ export async function getConstructorStandings(year: number): Promise<{
 }[]> {
   try {
     const res = await fetch(
-      `https://api.jolpi.ca/ergast/f1/${year}/constructorstandings.json?limit=100`
+      `https://api.jolpi.ca/ergast/f1/${year}/constructorstandings.json?limit=100`,
+      getCacheOptions(year)
     );
     if (!res.ok) return [];
     const data = await res.json();
@@ -324,7 +338,8 @@ export async function getQualifyingResults(
 }[]> {
   try {
     const res = await fetch(
-      `https://api.jolpi.ca/ergast/f1/${year}/${round}/qualifying.json`
+      `https://api.jolpi.ca/ergast/f1/${year}/${round}/qualifying.json`,
+      getCacheOptions(year)
     );
     if (!res.ok) return [];
     const data = await res.json();
